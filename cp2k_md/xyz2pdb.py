@@ -3,7 +3,7 @@
 """
 Created on Wed May  2 19:26:20 2018
  
-@author: iinfante
+@author: Ivan Infante 
 """
 import numpy as np
 import datetime
