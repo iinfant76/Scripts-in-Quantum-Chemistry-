@@ -7,6 +7,7 @@ Created on Tue Apr  3 22:57:34 2018
 """
 import numpy as np
 import argparse
+from common import atomic_mass
 
 def make_bond_matrix(n_atoms, coords):
     #Build a tensor made (n_atoms, axes, n_atoms), where axes = x-x0, y-y0, z-z0
@@ -36,7 +37,7 @@ def make_connectivity(r, bond_tresh):
                 for k in range(r.shape[0]):
                     if ( (r[j, k] > 0.5) & (r[j, k] < bond_tresh) ):
                         if ( (i != j) & (i < k) & (j !=k)):
-                            print(i+1, j+1, k+1) 
+                            #print(i+1, j+1, k+1) 
                             angles.extend((i+1,j+1,k+1))
                         for l in range(r.shape[0]):
                             if ( (r[k, l] > 0.5) & (r[k, l] < bond_tresh) ):
@@ -77,7 +78,7 @@ def main(filename, idx, isolated, bond_tresh):
     atoms = '{:10d} !NATOM\n'.format(n_atoms) 
     atoms_list = g + title + t_text + atoms
     for iatom in range(n_atoms):
-        atoms_list += '{:10d} MOL{:<4d}  R{:<7d} {:<7s}  {:<6s}  {:<6s}{:10.6f}     {:8.3f}           {:1d}\n'.format(
+        atoms_list += '{:10d} MOL{:<4d}  R{:<7d} {:<7d}  {:<6s}  {:<6s}{:10.6f}     {:8.3f}           {:1d}\n'.format(
                 iatom+1, idx, idx, 1, atoms_lig[iatom], atoms_lig[iatom], -99.0, 207.2, 0) 
     
     # Print Bonds 
