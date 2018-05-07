@@ -1,3 +1,4 @@
+
 __all__ = ['atomic_number', 'atomic_mass']
 
 def atomic_number(s: str):
@@ -16,7 +17,7 @@ def atomic_number(s: str):
          'rn': 86, 'fr': 87, 'ra': 88, 'ac': 89, 'th': 90, 'pa': 91, 'u': 92,
          'np': 93, 'pu': 94, 'am': 95, 'cm': 96, 'bk': 97, 'cf': 98, 'es': 99,
          'fm': 100, 'md': 101, 'no': 102, 'lr': 103, 'rf': 104, 'db': 105}
-return d[s]
+    return d[s]
 
 
 def atomic_mass(s: str):
@@ -35,5 +36,5 @@ def atomic_mass(s: str):
          'rn': 222.000, 'fr': 223.000, 'ra': 226.000, 'ac': 227.000, 'th': 232.038, 'pa': 231.036, 'u': 238.029,
          'np': 237.000, 'pu': 244.000, 'am': 243.000, 'cm': 247.000, 'bk': 247.000, 'cf': 251.000, 'es': 252.000,
          'fm': 257.000, 'md': 258.000, 'no': 259.000, 'lr': 262.000, 'rf': 261.000, 'db': 262.000}
-return d[s]
+    return d[s]
 
