@@ -85,9 +85,14 @@ def main(filename, idx, isolated, bond_tresh):
     atoms = '{:10d} !NATOM\n'.format(n_atoms) 
     atoms_list = g + title + t_text + atoms
     for iatom in range(n_atoms):
-        atoms_list += '{:10d} MOL{:<4d}  R{:<7d} {:<7d}  {:<6s}  {:<6s}{:10.6f}     {:8.3f}           {:1d}\n'.format(
-                iatom+1, idx, idx, 1, atoms_lig[iatom], atoms_lig[iatom], 
-                charges[iatom], atomic_mass(atoms_real[iatom].lower()), 0) 
+        if not isolated:
+        	atoms_list += '{:10d} MOL{:<4d}  {:<7d}  R{:<7d}  {:<6s}  {:<6s}{:10.6f}     {:8.3f}           {:1d}\n'.format(
+                	iatom+1, idx, idx, 1, atoms_lig[iatom], atoms_lig[iatom], 
+                	charges[iatom], atomic_mass(atoms_real[iatom].lower()), 0) 
+        else:
+                atoms_list += '{:10d} MOL{:<4d}  {:<7d}  R{:<7d}  {:<6s}  {:<6s}{:10.6f}     {:8.3f}           {:1d}\n'.format(
+                        iatom+1, idx, iatom+1, 1, atoms_lig[iatom], atoms_lig[iatom],
+                        charges[iatom], atomic_mass(atoms_real[iatom].lower()), 0)		
     
     # Print Bonds 
     n_bonds = int(len(bonds)/2) # Number of bonds 
@@ -109,7 +114,11 @@ def main(filename, idx, isolated, bond_tresh):
 
     endfile = '\n\n\n         0 !NIMPHI\n\n\n         0 !NDON\n\n\n         0 !NACC\n\n\n         0 !NNB\n\n\n'
 
-    print(atoms_list+bonds_list+angles_list+dihedrals_list+endfile)
+    # Save .psf file 
+    print_all = atoms_list+bonds_list+angles_list+dihedrals_list+endfile
+    output = '{}.psf'.format(filename)
+    with open(output, 'w') as f:
+         f.write(print_all)
 
 def read_cmd_line(parser):
     """

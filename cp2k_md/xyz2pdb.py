@@ -1,67 +1,106 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed May  2 19:26:20 2018
- 
-@author: Ivan Infante 
-"""
 import numpy as np
 import datetime
- 
-charges = {
-        "Cs": 1.000,
-        "Pb": 2.000,
-        "Br": -1.000,
-        "NG3P": -0.590,
-        "HGP5": 0.250,
-        "HGA2": 0.090,
-        "HGA3": 0.090,
-        "CG21": -0.180,
-        "CG24": -0.104,
-        "CG31": -0.270,
-        "CG34": -0.349,
-        }
- 
-# Read a file of ligand with atomic labels as in the force field file. Warning: the atom labels need to be listed as the original ligand
-file_lig_label = 'DDAB_label_final.xyz'
-atoms_lig_label = np.loadtxt(file_lig_label, usecols=0, dtype=np.str) # Read file of ligands with label
-n_atoms_lig = atoms_lig_label.size # Number of atoms in the ligand
- 
-# Read xyz file
-# Note: in the xyz file the atoms of the NC are listed first, then the atoms of the ligand.
-# If there is more than one ligand of the same type, the atoms of ligand1 are stacked first, then the second, etc.
-# Each ligand must follow the same atomic order of the first ligand stacked after the NC.
-n_atoms_NC = 393 # Number of atoms of the core Nanocrystal
-n_ligands = 23 # Number of ligands of same type
-name_lig = 'DDA' # Maximum 3 characters
- 
-filename = 'CsPbBr3_23DDAB.xyz' # Name of xyz file
-atoms = np.loadtxt(filename, skiprows=2, usecols=0, dtype=np.str) # Read atoms names from xyz file
-coords = np.loadtxt(filename, skiprows=2, usecols=(1,2,3)) # Read coordinates of all atoms
- 
-# Write pdb file
-cell_size = [75, 75, 75]
-cell_angle = [90, 90, 90]
-title = "TITLE     PDB file created by Ivan \n"
-author = 'AUTHOR    {} {} \n'.format('Ivan Infante', datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y"))
-crystal = 'CRYST1{:9.3f}{:9.3f}{:9.3f}{:9.3f}{:9.3f}{:9.3f}\n'.format(
-        cell_size[0], cell_size[1], cell_size[2], cell_angle[0], cell_angle[1], cell_angle[2])          
- 
-loop_atoms = title + author + crystal
-# Write first the NC
-for iatom in range(n_atoms_NC):  
-     loop_atoms += 'ATOM{:7d} {:4s}  {:3s}{:5d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}      {:4s}{:2s}\n'.format(
-             iatom+1, atoms[iatom], 'R1', iatom+1, coords[iatom,0], coords[iatom,1], coords[iatom,2], 1, charges[atoms[iatom]], 'CPB', atoms[iatom])
- 
-# Now write the ligands
-for ilig in range(n_ligands):
-    res = 'R{}'.format(ilig+2)
-    for iatom in range(n_atoms_lig):
-        loop_atoms += 'ATOM{:7d} {:4s}  {:3s}{:5d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}      {:4s}{:2s}\n'.format(
-                (iatom + n_atoms_lig * ilig + n_atoms_NC + 1), atoms_lig_label[iatom], res, n_atoms_NC+ilig+1,
-                coords[iatom + n_atoms_lig * ilig + n_atoms_NC,0], coords[iatom + n_atoms_lig * ilig + n_atoms_NC,1], coords[iatom + n_atoms_lig * ilig + n_atoms_NC,2],
-                1, charges[atoms_lig_label[iatom]], name_lig, atoms[iatom+n_atoms_NC])
- 
-with open('result.pdb', 'w') as f:
-    f.write(loop_atoms)
+import argparse
+
+def read_xyz(filename):
+    atoms = np.loadtxt(filename, usecols=0, skiprows=2, dtype=np.str)
+    coords = np.loadtxt(filename, usecols=(1,2,3), skiprows=2)
+    charges = np.loadtxt(filename, usecols=4, skiprows=2)
+    atoms_lbls = np.loadtxt(filename, usecols=5, skiprows=2, dtype=np.str)
+    return atoms, coords, charges, atoms_lbls
+
+def create_lists_xyz(listoffiles):
+    atoms_grouped = [ read_xyz(ifile)[0] for ifile in listoffiles ]
+    coords_grouped = [ read_xyz(ifile)[1] for ifile in listoffiles ] 
+    charges_grouped = [ read_xyz(ifile)[2] for ifile in listoffiles ]
+    atoms_lbls_grouped = [ read_xyz(ifile)[3] for ifile in listoffiles ]
+    return atoms_grouped, coords_grouped, charges_grouped, atoms_lbls_grouped
+
+def main(wholesystem, nc, ligands, n_ligands, solvents, n_solvents):
+    # Write pdb file
+    cell_size = [75, 75, 75]
+    cell_angle = [90, 90, 90]
+    title = "TITLE     PDB file created by Ivan \n"
+    author = 'AUTHOR    {} {} \n'.format('Ivan Infante', datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y"))
+    crystal = 'CRYST1{:9.3f}{:9.3f}{:9.3f}{:9.3f}{:9.3f}{:9.3f}\n'.format(
+            cell_size[0], cell_size[1], cell_size[2], cell_angle[0], cell_angle[1], cell_angle[2])
+
+    loop_atoms = title + author + crystal
+
+    # Read the atoms and coordinates of the whole system
+    atoms = np.loadtxt(wholesystem, usecols=0, skiprows=2, dtype=np.str) 
+    coords = np.loadtxt(wholesystem, skiprows = 2, usecols=(1,2,3)) 
+
+    # Write first the NC
+    atoms_nc, coords_nc, charges_nc, atoms_lbls_nc = create_lists_xyz(nc) # Take info from xyz of fragments, coords are not needed.   
+    tot_atoms = 0
+    for atype in range(len(nc)): # Loop over each moiety made of an atom type of the NC, e.g. the Pb moiety
+        for iatom in range(len(atoms_nc[atype])):
+            tot_atoms += 1
+            loop_atoms += 'ATOM{:7d} {:4s}  {:3s}{:5d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}      MOL{:1d}{:2s}\n'.format(
+                    tot_atoms, atoms_lbls_nc[atype][iatom], 'R1', tot_atoms,
+                    coords[tot_atoms-1,0], coords[tot_atoms-1,1], coords[tot_atoms-1,2], 1,
+                    charges_nc[atype][iatom], atype+1, atoms_nc[atype][iatom] ) 
+    
+    # Now write the ligands. 
+    if ligands: 
+        atoms_lig, coords_lig, charges_lig, atoms_lbls_lig = create_lists_xyz(ligands) 
+        tot_residues = tot_atoms 
+        tot_fragtype = atype + 1
+        for ligtype in range(len(ligands)): 
+            tot_fragtype += 1
+            for ilig in range(int(n_ligands[ligtype])):
+                tot_residues += 1 
+                for iatom in range(len(atoms_lig[ligtype])):
+                     tot_atoms += 1
+                     loop_atoms += 'ATOM{:7d} {:4s}  {:3s}{:5d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}      MOL{:1d}{:2s}\n'.format(
+                          tot_atoms, atoms_lbls_lig[ligtype][iatom], 'R1', tot_residues,
+                          coords[tot_atoms-1,0], coords[tot_atoms-1,1], coords[tot_atoms-1,2], 1,
+                          charges_lig[ligtype][iatom], tot_fragtype, atoms_lig[ligtype][iatom])
+
+    # Now write the ligands. 
+    if solvents:
+        atoms_solv, coords_solv, charges_solv, atoms_lbls_solv = create_lists_xyz(solvents)
+        for solvtype in range(len(solvents)):
+            tot_fragtype += 1
+            for isolv in range(int(n_solvents[solvtype])):
+                tot_residues += 1
+                for iatom in range(len(atoms_solv[solvtype])):
+                     tot_atoms += 1
+                     loop_atoms += 'ATOM{:7d} {:4s}  {:3s}{:5d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}      MOL{:1d}{:2s}\n'.format(
+                          tot_atoms, atoms_lbls_solv[solvtype][iatom], 'R1', tot_residues,
+                          coords[tot_atoms-1,0], coords[tot_atoms-1,1], coords[tot_atoms-1,2], 1,
+                          charges_solv[solvtype][iatom], tot_fragtype, atoms_solv[solvtype][iatom])
+
+    output = '{}.pdb'.format(wholesystem) 
+    with open(output, 'w') as f:
+         f.write(loop_atoms)
+
+def read_cmd_line(parser):
+    """
+    Parse Command line options.
+    """
+    args = parser.parse_args()
+
+    attributes = ['whole', 'nc', 'ligands', 'n_ligands', 'solvents', 'n_solvents']
+
+    return [getattr(args, p) for p in attributes]
+
+if __name__ == "__main__":
+    msg = "xyz2pdb -nc <path/to/filenames> "
+
+    parser = argparse.ArgumentParser(description=msg)
+    parser.add_argument(
+        '-whole', required=True, help='path to the xyz file of the entire system: NC + ligands + solvent')
+    parser.add_argument(
+        '-nc', required=True, nargs='+', help='path to the xyz files of the nanocrystal atomic types')
+    parser.add_argument(
+        '-ligands', required=False, nargs='+', help='path to the xyz file(s) of the ligand(s) type(s)')
+    parser.add_argument(
+        '-n_ligands', required=False, nargs='+', help='number of moieties of a given ligand type')
+    parser.add_argument(
+        '-solvents', required=False, nargs='+', help='path to the xyz file(s) of the solvent(s) type(s)')
+    parser.add_argument(
+        '-n_solvents', required=False, nargs='+', help='number of moieties of a given solvent type')
+    main(*read_cmd_line(parser))
 
