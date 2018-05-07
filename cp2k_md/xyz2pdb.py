@@ -3,18 +3,18 @@ import datetime
 import argparse
 
 def read_xyz(filename):
-    atoms = np.loadtxt(filename, usecols=0, skiprows=2, dtype=np.str)
+    atoms_lbls = np.loadtxt(filename, usecols=0, skiprows=2, dtype=np.str)
     coords = np.loadtxt(filename, usecols=(1,2,3), skiprows=2)
     charges = np.loadtxt(filename, usecols=4, skiprows=2)
-    atoms_lbls = np.loadtxt(filename, usecols=5, skiprows=2, dtype=np.str)
-    return atoms, coords, charges, atoms_lbls
+    atoms = np.loadtxt(filename, usecols=5, skiprows=2, dtype=np.str)
+    return atoms_lbls, coords, charges, atoms
 
 def create_lists_xyz(listoffiles):
-    atoms_grouped = [ read_xyz(ifile)[0] for ifile in listoffiles ]
+    atoms_lbls_grouped = [ read_xyz(ifile)[0] for ifile in listoffiles ]
     coords_grouped = [ read_xyz(ifile)[1] for ifile in listoffiles ] 
     charges_grouped = [ read_xyz(ifile)[2] for ifile in listoffiles ]
-    atoms_lbls_grouped = [ read_xyz(ifile)[3] for ifile in listoffiles ]
-    return atoms_grouped, coords_grouped, charges_grouped, atoms_lbls_grouped
+    atoms_grouped = [ read_xyz(ifile)[3] for ifile in listoffiles ]
+    return atoms_lbls_grouped, coords_grouped, charges_grouped, atoms_grouped
 
 def main(wholesystem, nc, ligands, n_ligands, solvents, n_solvents):
     # Write pdb file
@@ -32,21 +32,23 @@ def main(wholesystem, nc, ligands, n_ligands, solvents, n_solvents):
     coords = np.loadtxt(wholesystem, skiprows = 2, usecols=(1,2,3)) 
 
     # Write first the NC
-    atoms_nc, coords_nc, charges_nc, atoms_lbls_nc = create_lists_xyz(nc) # Take info from xyz of fragments, coords are not needed.   
     tot_atoms = 0
-    for atype in range(len(nc)): # Loop over each moiety made of an atom type of the NC, e.g. the Pb moiety
-        for iatom in range(len(atoms_nc[atype])):
-            tot_atoms += 1
-            loop_atoms += 'ATOM{:7d} {:4s}  {:3s}{:5d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}      MOL{:1d}{:2s}\n'.format(
-                    tot_atoms, atoms_lbls_nc[atype][iatom], 'R1', tot_atoms,
-                    coords[tot_atoms-1,0], coords[tot_atoms-1,1], coords[tot_atoms-1,2], 1,
-                    charges_nc[atype][iatom], atype+1, atoms_nc[atype][iatom] ) 
+    atype = 0 
+    if nc:
+        atoms_lbls_nc, coords_nc, charges_nc, atoms_nc = create_lists_xyz(nc) # Take info from xyz of fragments, coords are not needed.   
+        for atype in range(len(nc)): # Loop over each moiety made of an atom type of the NC, e.g. the Pb moiety
+            for iatom in range(len(atoms_nc[atype])):
+                tot_atoms += 1
+                loop_atoms += 'ATOM{:7d} {:4s}  {:3s}{:5d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}      MOL{:1d}{:2s}\n'.format(
+                        tot_atoms, atoms_lbls_nc[atype][iatom], 'R1', tot_atoms,
+                        coords[tot_atoms-1,0], coords[tot_atoms-1,1], coords[tot_atoms-1,2], 1,
+                        charges_nc[atype][iatom], atype+1, atoms_nc[atype][iatom] ) 
     
     # Now write the ligands. 
+    tot_residues = tot_atoms 
+    tot_fragtype = atype 
     if ligands: 
-        atoms_lig, coords_lig, charges_lig, atoms_lbls_lig = create_lists_xyz(ligands) 
-        tot_residues = tot_atoms 
-        tot_fragtype = atype + 1
+        atoms_lbls_lig, coords_lig, charges_lig, atoms_lig = create_lists_xyz(ligands) 
         for ligtype in range(len(ligands)): 
             tot_fragtype += 1
             for ilig in range(int(n_ligands[ligtype])):
@@ -60,7 +62,7 @@ def main(wholesystem, nc, ligands, n_ligands, solvents, n_solvents):
 
     # Now write the ligands. 
     if solvents:
-        atoms_solv, coords_solv, charges_solv, atoms_lbls_solv = create_lists_xyz(solvents)
+        atoms_lbls_solv, coords_solv, charges_solv, atoms_solv = create_lists_xyz(solvents)
         for solvtype in range(len(solvents)):
             tot_fragtype += 1
             for isolv in range(int(n_solvents[solvtype])):
@@ -93,7 +95,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '-whole', required=True, help='path to the xyz file of the entire system: NC + ligands + solvent')
     parser.add_argument(
-        '-nc', required=True, nargs='+', help='path to the xyz files of the nanocrystal atomic types')
+        '-nc', required=False, nargs='+', help='path to the xyz files of the nanocrystal atomic types')
     parser.add_argument(
         '-ligands', required=False, nargs='+', help='path to the xyz file(s) of the ligand(s) type(s)')
     parser.add_argument(
