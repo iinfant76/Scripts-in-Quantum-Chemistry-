@@ -12,17 +12,14 @@ setup(
     packages=[
         "general"],
     classifiers=[
-        'License :: OSI Approved :: GPL License'
+        'License :: OSI Approved :: GNU General Public License (GPL)', 
         'Intended Audience :: Science/Research',
-        'programming language :: python :: 3.6',
-        'development status :: 1- Alpha',
-        'intended audience :: science/research',
-        'topic :: scientific/engineering :: chemistry'
+        'Programming Language :: Python :: 3.6',
+        'Development Status :: 3 - Alpha',
+        'Topic :: Scientific/Engineering :: Chemistry'
     ],
     install_requires=[
         'numpy', 'matplotlib', 'scipy', 'qmflows'], 
-#    dependency_links=[
-#            "https://github.com/iinfant76/Scripts-in-Quantum-Chemistry-/tarball/master#egg=qm_scripts"],
     scripts=[
         'cp2k_md/xyz2pdb.py',
         'cp2k_md/xyz2psf.py']
