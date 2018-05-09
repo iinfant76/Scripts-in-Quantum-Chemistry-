@@ -8,7 +8,7 @@ if "%SPHINXBUILD%" == "" (
 	set SPHINXBUILD=sphinx-build
 )
 set SOURCEDIR=.
-set BUILDDIR=../sphynxdoc/docs 
+set BUILDDIR=../sphynxdoc-docs
 set SPHINXPROJ=qm_scripts
 
 if "%1" == "" goto help
