@@ -10,7 +10,11 @@ Pre-requirements
 ================
 * Force-field parameters
 
-It is required that you already have 
+It is required that you already have force-field (FF) parameters for your system already available. 
 
+In the case of a nanocrystal passivated with organic ligands immersed in a solvent, usually you can obtain the parameters for the organic ligands from the `CGenFF <https://cgenff.paramchem.org/>` online library . The capping ligands are indeed made by organic molecules, e.g. oleate, alkyl-ammonium, etc., which have been widely employed in biosystems, and it will be rather straightforward to obtain good FF parameters.  
+The same applies to solvents, for which force-fields have been widely tested. 
+
+In case of semiconductor II-VI, IV-VI, perovksite nanocrystals, the 
 
 
