@@ -1,5 +1,7 @@
 __all__ = ['make_bond_matrix']
 
+import numpy as np 
+
 def make_bond_matrix(n_atoms, coords):
     #Build a tensor made (n_atoms, axes, n_atoms), where axes = x-x0, y-y0, z-z0
     dist = np.stack(
