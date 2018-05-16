@@ -22,6 +22,7 @@ setup(
         'numpy', 'matplotlib', 'scipy', 'qmflows'], 
     scripts=[
         'cp2k_md/xyz2pdb.py',
-        'cp2k_md/xyz2psf.py']
+        'cp2k_md/xyz2psf.py',
+        'analysis/rdf.py']
 )
 
