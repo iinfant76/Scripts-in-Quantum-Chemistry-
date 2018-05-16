@@ -57,7 +57,7 @@ def rdf(fn, atoms_i, atoms_j, dr, rmax, start, stride):
         # Compute the density of atoms inside r and r+dr the elemental volume dV 
         density = counts / volume[1:] # skip the first element dV which is 0 
         # Store density in g_ij
-        if (iframe == 1):
+        if (iframe == start):
             g_ij = density
         else:
             g_ij = np.column_stack((g_ij,density))
