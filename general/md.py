@@ -2,6 +2,7 @@ __all__ = ['make_bond_matrix', 'rdf']
 
 import numpy as np 
 import subprocess
+import pandas as pd 
 
 def make_bond_matrix(n_atoms, coords):
     #Build a tensor made (n_atoms, axes, n_atoms), where axes = x-x0, y-y0, z-z0
@@ -36,7 +37,8 @@ def rdf(fn, atoms_i, atoms_j, dr, rmax, start, stride):
     
     # Compute the volume in a concentric sphere of size dr at a distance r from the origin  
     volume = 4 * np.pi * np.power(r_grid, 2) * dr # elemental volume dV = 4*pi*r^2*dr
-
+    vol_tot = np.sum(volume) 
+    
     # Read the order of atoms from the first frame of the trajectory. This order is unchanged. 
     atoms = np.genfromtxt(fn, skip_header = 2, skip_footer=(int(n_lines) - (n_atoms + 2)), usecols=0, dtype=str)
 
@@ -46,21 +48,26 @@ def rdf(fn, atoms_i, atoms_j, dr, rmax, start, stride):
 
     for iframe in range(start, n_frames, stride): 
         # Read coordinates from iframe
-        coords = np.genfromtxt(fn, skip_header = (2 + (n_atoms + 2) * (iframe - 1)), 
-                    skip_footer=(int(n_lines) - ((n_atoms + 2) * iframe)), usecols=(1,2,3))
+#        coords = np.genfromtxt(fn, skip_header = (2 + (n_atoms + 2) * (iframe - 1)), 
+#                    skip_footer=(int(n_lines) - ((n_atoms + 2) * iframe)), usecols=(1,2,3))
+        coords = pd.read_csv(fn, nrows = (n_atoms + 2), delim_whitespace=True, header=None, 
+                    skiprows = (2 + (n_atoms + 2) * (iframe - 1)), usecols=(1,2,3)).astype(float).values
         # Compute bond distance matrix for iframe
         bond_mtx = make_bond_matrix(n_atoms, coords)
         # Slice the bond_matrix with only the atom types
         sliced_mtx = bond_mtx[np.ix_(index_i[0], index_j[0])]
         # Count the number of atoms within r and r+dr  
-        counts = np.stack( np.where( (sliced_mtx > r_grid[idr]) & (sliced_mtx < r_grid[idr+1]) )[0].size for idr in range(r_grid.size-1))
-        # Compute the density of atoms inside r and r+dr the elemental volume dV 
-        density = counts / volume[1:] # skip the first element dV which is 0 
+        rho_ab = np.stack( np.where( (sliced_mtx > r_grid[idr]) & (sliced_mtx < r_grid[idr+1]) )[0].size for idr in range(r_grid.size-1))
+        # Compute the total density of pair of atoms
+        rho_tot = np.sum(rho_ab) 
+        rho_bulk = rho_tot / vol_tot  
+#        density = counts / volume[1:] # skip the first element dV which is 0 
+        g_ab = rho_ab / rho_bulk 
         # Store density in g_ij
         if (iframe == start):
-            g_ij = density
+            g_ij = g_ab
         else:
-            g_ij = np.column_stack((g_ij,density))
+            g_ij = np.column_stack((g_ij,g_ab))
 
     # Average over all frames
     g_ij_av = np.average(g_ij, axis=1)
