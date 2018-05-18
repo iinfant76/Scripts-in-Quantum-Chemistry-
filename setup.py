@@ -19,7 +19,7 @@ setup(
         'Topic :: Scientific/Engineering :: Chemistry'
     ],
     install_requires=[
-        'numpy', 'matplotlib', 'scipy', 'qmflows'], 
+        'numpy', 'matplotlib', 'scipy', 'qmflows', 'pandas'], 
     scripts=[
         'cp2k_md/xyz2pdb.py',
         'cp2k_md/xyz2psf.py',
