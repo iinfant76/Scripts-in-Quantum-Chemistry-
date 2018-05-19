@@ -36,7 +36,7 @@
         do j = 1, n_atoms
            do i = 1, n_atoms 
              if (i.ne.j .and. i.ne.k) then  
-                teta(i,j,k) = acosd( ( r_mtx(i,j)**2 + r_mtx(j,k)**2   &
+                teta(i,j,k) = acos( ( r_mtx(i,j)**2 + r_mtx(j,k)**2   &
                     - r_mtx(i,k)**2 ) / ( 2 * r_mtx(i,j) * r_mtx(i,k)))  
              endif 
            enddo

@@ -57,7 +57,9 @@ def rdf(fn, atoms_i, atoms_j, dr, rmax, start, stride):
         # Slice the bond_matrix with only the atom types
         sliced_mtx = bond_mtx[np.ix_(index_i[0], index_j[0])]
         # Count the number of atoms within r and r+dr  
-        rho_ab = np.stack( np.where( (sliced_mtx > r_grid[idr]) & (sliced_mtx < r_grid[idr+1]) )[0].size for idr in range(r_grid.size-1))
+        rho_ab = np.stack( 
+                    np.where( (sliced_mtx > r_grid[idr]) & (sliced_mtx < r_grid[idr+1]) )[0].size 
+                    for idr in range(r_grid.size-1))
         # Compute the total density of pair of atoms
         rho_tot = np.sum(rho_ab) 
         rho_bulk = rho_tot / vol_tot  

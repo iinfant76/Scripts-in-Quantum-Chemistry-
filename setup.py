@@ -10,7 +10,7 @@ setup(
     author_email='iinfant76@gmail.com',
     keywords='MD cp2k',
     packages=[
-        "general"],
+        "general", "general/src_fortran"],
     classifiers=[
         'License :: OSI Approved :: GNU General Public License (GPL)', 
         'Intended Audience :: Science/Research',
