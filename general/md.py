@@ -30,8 +30,11 @@ def get_numberofatoms(fn):
     with open(fn) as f:
        l = f.readline()
        n_atoms = int(l.split()[0])
+
+    # Get the number of frames in the trajectory file
+    n_frames = int(int(n_lines)/(n_atoms+2))
     
-    return n_atoms 
+    return n_atoms, n_frames 
 
 def read_atomlist(fn, n_atoms):
     # Read atomic list from xyz file
@@ -48,12 +51,9 @@ def read_xyz_coordinates(fn, n_atoms, iframe):
     return coords  
 
 def rdf(fn, atoms_i, atoms_j, dr, rmax, start, stride): 
-    # Get the number of atoms from the trajectory file
-    n_atoms = get_numberofatoms(fn) 
+    # Get the number of atoms and number of frames in trajectory file
+    n_atoms, n_frames = get_numberofatoms(fn) 
 
-    # Calculate total number of frames in the trajectory file  
-    n_frames = int(int(n_lines)/(n_atoms+2))
-    
     # Create grid of r values to compute the pair correlation function g_ij 
     r_grid = np.arange(0, rmax, dr)
     
@@ -96,12 +96,9 @@ def rdf(fn, atoms_i, atoms_j, dr, rmax, start, stride):
     return r_grid[1:], g_ij_av 
 
 def adf(fn, atoms_i, atoms_j, atoms_k, start, stride): 
-    # Retrieve number of lines in trajectory file
-    n_atoms = get_numberofatoms(fn) 
+    # Get the number of atoms and number of frames in trajectory file
+    n_atoms, n_frames = get_numberofatoms(fn) 
 
-    # Calculate total number of frames in the trajectory file  
-    n_frames = int(int(n_lines)/(n_atoms+2))
-    
     # Create grid of r values to compute the pair correlation function g_ij 
     ang_grid = np.arange(0, 360, 1)
     

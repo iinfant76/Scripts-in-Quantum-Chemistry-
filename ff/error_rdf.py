@@ -1,5 +1,5 @@
 import numpy as np 
-from general.md import rdf 
+from general.md_f import rdf 
 
 # Fixed Parameters for computing the RDF  
 start = 1 
