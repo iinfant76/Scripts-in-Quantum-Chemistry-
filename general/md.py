@@ -58,7 +58,7 @@ def rdf(fn, atoms_i, atoms_j, dr, rmax, start, stride):
        # bond_mtx = make_bond_matrix(n_atoms, coords)
         bond_mtx = make_bond_matrix_f(coords, n_atoms)
         # Slice the bond_matrix with only the atom types
-        sliced_mtx = bond_mtx[np.ix_(index_i[0], index_j[0])]
+        sliced_mtx = np.triu(bond_mtx[np.ix_(index_i[0], index_j[0])]) 
         # Count the number of atoms within r and r+dr  
         rho_ab = np.stack( 
                     np.where( (sliced_mtx > r_grid[idr]) & (sliced_mtx < r_grid[idr+1]) )[0].size 
@@ -117,9 +117,9 @@ def adf(fn, atoms_i, atoms_j, atoms_k, start, stride):
                     skiprows = (2 + (n_atoms + 2) * (iframe - 1)), usecols=(1,2,3)).astype(float).values
         # Compute bond distance matrix for iframe
         bond_mtx = make_bond_matrix_f(coords, n_atoms)
-        teta_mtx = np.triu(np.degrees(make_angle_matrix_f(bond_mtx, coords, n_atoms)))
+        teta_mtx = np.degrees(make_angle_matrix_f(bond_mtx, coords, n_atoms))
         # Slice the bond_matrix with only the atom types
-        sliced_mtx = teta_mtx[np.ix_(index_i[0], index_j[0], index_k[0])]
+        sliced_mtx = np.triu(teta_mtx[np.ix_(index_i[0], index_j[0], index_k[0])]) 
         # Count the number of atoms within r and r+dr  
         rho_ab = np.stack( 
                     np.where( (sliced_mtx > ang_grid[idr]) & (sliced_mtx < ang_grid[idr+1]) )[0].size 
