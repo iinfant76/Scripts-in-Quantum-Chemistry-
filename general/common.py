@@ -1,4 +1,3 @@
-
 __all__ = ['atomic_number', 'atomic_mass']
 
 def atomic_number(s: str):

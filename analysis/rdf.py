@@ -1,7 +1,7 @@
 import argparse
 import numpy as np 
 import matplotlib.pyplot as plt 
-from general.md import (make_bond_matrix, rdf) 
+from general.md import rdf 
 
 def main(fn, atoms_i, atoms_j, dr, rmax, start, stride):
     x, y = rdf(fn, atoms_i, atoms_j, dr, rmax, start, stride)  
