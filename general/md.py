@@ -4,7 +4,7 @@ __all__ = ['make_bond_matrix', 'get_numberofatoms', 'read_atomlist',
 import numpy as np 
 import subprocess
 import pandas as pd 
-from md_f import make_bond_matrix_f, make_angle_matrix_f
+from .md_f import make_bond_matrix_f, make_angle_matrix_f
 
 def make_bond_matrix(n_atoms, coords):
     #Build a tensor made (n_atoms, axes, n_atoms), where axes = x-x0, y-y0, z-z0

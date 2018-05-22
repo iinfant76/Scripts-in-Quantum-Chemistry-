@@ -1,4 +1,5 @@
-from setuptools import setup
+from numpy.distutils.core import Extension, setup
+# from setuptools import setup
 
 setup(
     name='qm_scripts',
@@ -11,6 +12,8 @@ setup(
     keywords='MD cp2k',
     packages=[
         "general"],
+    ext_modules=[Extension(
+        'md_f', sources=['general/md_f.f90'])],
     classifiers=[
         'License :: OSI Approved :: GNU General Public License (GPL)', 
         'Intended Audience :: Science/Research',
