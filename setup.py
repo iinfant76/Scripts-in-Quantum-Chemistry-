@@ -13,7 +13,7 @@ setup(
     packages=[
         "general"],
     ext_modules=[Extension(
-        'md_f', sources=['general/md_f.f90'])],
+        'general.md_f', sources=['general/md_f.f90'])],
     classifiers=[
         'License :: OSI Approved :: GNU General Public License (GPL)', 
         'Intended Audience :: Science/Research',
@@ -28,4 +28,3 @@ setup(
         'cp2k_md/xyz2psf.py',
         'analysis/rdf.py']
 )
-
