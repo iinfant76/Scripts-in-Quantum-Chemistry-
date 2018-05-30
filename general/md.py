@@ -79,21 +79,22 @@ def rdf(fn, atoms_i, atoms_j, dr, rmax, start, stride):
         rho_ab = np.stack( 
                     np.where( (sliced_mtx > r_grid[idr]) & (sliced_mtx < r_grid[idr+1]) )[0].size 
                     for idr in range(r_grid.size-1))
-        # Compute the total density of pair of atoms
-        rho_tot = np.sum(rho_ab) 
-        rho_bulk = rho_tot / vol_tot  
-#        density = counts / volume[1:] # skip the first element dV which is 0 
-        g_ab = rho_ab / rho_bulk 
         # Store density in g_ij
         if (iframe == start):
-            g_ij = g_ab
+            rho_ij = rho_ab
         else:
-            g_ij = np.column_stack((g_ij,g_ab))
+            rho_ij = np.column_stack((rho_ij,rho_ab))
 
     # Average over all frames
-    g_ij_av = np.average(g_ij, axis=1)
+    rho_ij_sum = np.sum(rho_ij, axis=1)
+    
+    # Compute the total density of pair of atoms
+    rho_tot = np.sum(rho_ij_sum) 
+    rho_bulk = rho_tot / vol_tot  
+    # Density = counts / volume[1:] # skip the first element dV which is 0 
+    g_ab = rho_ab / rho_bulk 
 
-    return r_grid[1:], g_ij_av 
+    return r_grid[1:], g_ab 
 
 def adf(fn, atoms_i, atoms_j, atoms_k, start, stride): 
     # Get the number of atoms and number of frames in trajectory file
