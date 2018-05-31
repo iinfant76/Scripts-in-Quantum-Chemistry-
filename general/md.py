@@ -56,11 +56,8 @@ def rdf(fn, atoms_i, atoms_j, dr, rmax, start, stride):
 
     # Create grid of r values to compute the pair correlation function g_ij 
     r_grid = np.arange(0, rmax, dr)
-    
-    # Compute the volume in a concentric sphere of size dr at a distance r from the origin  
-    volume = 4 * np.pi * np.power(r_grid, 2) * dr # elemental volume dV = 4*pi*r^2*dr
-    vol_tot = np.sum(volume) 
-    
+    n_bins = r_grid.size # Used for the histogram 
+
     # Read the order of atoms from the first frame of the trajectory. This order is unchanged. 
     atoms = read_atomlist(fn, n_atoms) 
 
@@ -68,6 +65,7 @@ def rdf(fn, atoms_i, atoms_j, dr, rmax, start, stride):
     index_i = np.where( atoms == atoms_i )
     index_j = np.where( atoms == atoms_j )
 
+    rdf_tot = np.zeros(n_bins)
     for iframe in range(start, n_frames, stride): 
         # Read coordinates from iframe
         coords = read_xyz_coordinates(fn, n_atoms, iframe) 
@@ -76,32 +74,35 @@ def rdf(fn, atoms_i, atoms_j, dr, rmax, start, stride):
         # Slice the bond_matrix with only the atom types
         sliced_mtx = np.triu(bond_mtx[np.ix_(index_i[0], index_j[0])]) 
         # Count the number of atoms within r and r+dr  
-        rho_ab = np.stack( 
-                    np.where( (sliced_mtx > r_grid[idr]) & (sliced_mtx < r_grid[idr+1]) )[0].size 
-                    for idr in range(r_grid.size-1))
-        # Store density in g_ij
-        if (iframe == start):
-            rho_ij = rho_ab
-        else:
-            rho_ij = np.column_stack((rho_ij,rho_ab))
+        rdf, r_grid = np.histogram(sliced_mtx, bins = n_bins, range=(0, rmax)) 
+        # Sum over all rdf 
+        rdf_tot += rdf
 
-    # Average over all frames
-    rho_ij_sum = np.sum(rho_ij, axis=1)
-    
-    # Compute the total density of pair of atoms
-    rho_tot = np.sum(rho_ij_sum) 
-    rho_bulk = rho_tot / vol_tot  
+    # Center radii 
+    r = 0.5 * ( r_grid[1:] + r_grid[:-1] ) 
+    # Compute the volume in a concentric sphere of size dr at a distance r from the origin  
+    volume = (4/3) * np.pi * ( np.power(r_grid[1:], 3) - np.power(r_grid[:-1], 3) )  # elemental volume dV = 4*pi*r^2*dr
+    vol_tot = np.sum(volume)
+    # Compute the rho_ab(r) : 
+    n_steps = int(n_frames/stride) # Number of frames used to compute rdf 
+    rho_ab = rdf_tot / ( volume * n_steps ) # This is the pair density distribution for each frame   
+    # Compute the bulk density 
+    n_tot = np.sum(rdf_tot[1:]) / n_steps # skip first element otherwise it counts an atom with itself  
+    rho_bulk = n_tot / vol_tot  
     # Density = counts / volume[1:] # skip the first element dV which is 0 
     g_ab = rho_ab / rho_bulk 
+    # Compute also the potential of mean force 
+    w_ab = -np.log(g_ab) 
+   
+    return r[1:], g_ab[1:], w_ab[1:] # we skip the first element at r=0, which in the histogram is counted many times: counts an atom with itself    
 
-    return r_grid[1:], g_ab 
-
-def adf(fn, atoms_i, atoms_j, atoms_k, start, stride): 
+def adf(fn, atoms_i, atoms_j, atoms_k, bond_max_ij, bond_max_jk, start, stride): 
     # Get the number of atoms and number of frames in trajectory file
     n_atoms, n_frames = get_numberofatoms(fn) 
 
     # Create grid of r values to compute the pair correlation function g_ij 
-    ang_grid = np.arange(0, 360, 1)
+    ang_grid = np.arange(1, 181)
+    n_bins = ang_grid.size  
     
     # Read the order of atoms from the first frame of the trajectory. This order is unchanged. 
     atoms = read_atomlist(fn, n_atoms) 
@@ -111,31 +112,30 @@ def adf(fn, atoms_i, atoms_j, atoms_k, start, stride):
     index_j = np.where( atoms == atoms_j )
     index_k = np.where( atoms == atoms_k )
     
+    adf_tot = np.zeros(n_bins - 1)     
     for iframe in range(start, n_frames, stride): 
         # Read coordinates from iframe
         coords = read_xyz_coordinates(fn, n_atoms, iframe) 
         # Compute bond distance matrix for iframe
         bond_mtx = make_bond_matrix_f(coords, n_atoms)
         # Compute the angle matrix and convert it in degrees 
-        teta_mtx = np.degrees(make_angle_matrix_f(bond_mtx, coords, n_atoms))
+        teta_mtx = np.degrees(make_angle_matrix_f(bond_mtx, coords, n_atoms, bond_max_ij, bond_max_jk))
         # Slice the bond_matrix with only the atom types
-        sliced_mtx = np.triu(teta_mtx[np.ix_(index_i[0], index_j[0], index_k[0])]) 
+        sliced_mtx = teta_mtx[np.ix_(index_i[0], index_j[0], index_k[0])] 
+        i, j, k = np.indices(sliced_mtx.shape)
+        condition = (i != j) & (j != k) & (i < k)
+        arr = np.extract(condition, sliced_mtx)
         # Count the number of atoms within r and r+dr  
-        rho_ab = np.stack( 
-                    np.where( (sliced_mtx > ang_grid[idr]) & (sliced_mtx < ang_grid[idr+1]) )[0].size 
-                    for idr in range(ang_grid.size-1))
+        adf, ang_grid = np.histogram(sliced_mtx, bins = n_bins - 1, range=(1, 180))
         # Compute the total density of pair of atoms
-        g_abc = rho_ab 
-        # Store density in g_ijk
-        if (iframe == start):
-            g_ijk = g_abc
-        else:
-            g_ijk = np.column_stack((g_ijk,g_abc))
+        adf_tot += adf 
 
     # Average over all frames
-    g_ijk_av = np.average(g_ijk, axis=1)
+    ang = 0.5 * (ang_grid[1:] + ang_grid[:-1])  
+    n_steps = int(n_frames/stride) 
+    adf_av = adf_tot / n_steps 
 
-    return ang_grid[1:], g_ijk_av 
+    return ang, adf_av  
 
 
 
