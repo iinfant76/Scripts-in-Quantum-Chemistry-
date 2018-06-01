@@ -101,7 +101,7 @@ def adf(fn, atoms_i, atoms_j, atoms_k, bond_max_ij, bond_max_jk, start, stride):
     n_atoms, n_frames = get_numberofatoms(fn) 
 
     # Create grid of r values to compute the pair correlation function g_ij 
-    ang_grid = np.arange(1, 181)
+    ang_grid = np.arange(1, 181, 0.5)
     n_bins = ang_grid.size  
     
     # Read the order of atoms from the first frame of the trajectory. This order is unchanged. 
@@ -119,14 +119,14 @@ def adf(fn, atoms_i, atoms_j, atoms_k, bond_max_ij, bond_max_jk, start, stride):
         # Compute bond distance matrix for iframe
         bond_mtx = make_bond_matrix_f(coords, n_atoms)
         # Compute the angle matrix and convert it in degrees 
-        teta_mtx = np.degrees(make_angle_matrix_f(bond_mtx, coords, n_atoms, bond_max_ij, bond_max_jk))
+        teta_mtx = np.degrees(make_angle_matrix_f(bond_mtx, coords, bond_max_ij, bond_max_jk, n_atoms))
         # Slice the bond_matrix with only the atom types
         sliced_mtx = teta_mtx[np.ix_(index_i[0], index_j[0], index_k[0])] 
         i, j, k = np.indices(sliced_mtx.shape)
         condition = (i != j) & (j != k) & (i < k)
         arr = np.extract(condition, sliced_mtx)
         # Count the number of atoms within r and r+dr  
-        adf, ang_grid = np.histogram(sliced_mtx, bins = n_bins - 1, range=(1, 180))
+        adf, ang_grid = np.histogram(arr, bins = n_bins - 1, range=(1, 180))
         # Compute the total density of pair of atoms
         adf_tot += adf 
 
